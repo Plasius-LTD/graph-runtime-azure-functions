@@ -9,16 +9,18 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 ## [Unreleased]
 
 - **Added**
-  - (placeholder)
+  - Optional telemetry sink support on read/write handler factories.
+  - Runtime metrics/errors for handler request, latency, and failure paths.
+  - Tests validating telemetry emission for success and invalid-request flows.
 
 - **Changed**
-  - (placeholder)
+  - README now documents runtime adapter telemetry surface.
 
 - **Fixed**
-  - (placeholder)
+  - N/A
 
 - **Security**
-  - (placeholder)
+  - N/A
 
 ## [0.1.1] - 2026-03-05
 

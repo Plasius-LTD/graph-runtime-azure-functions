@@ -59,13 +59,13 @@ import {
 app.http("graph-read", {
   methods: ["POST"],
   authLevel: "function",
-  handler: createGraphReadHandler({ gateway }),
+  handler: createGraphReadHandler({ gateway, telemetry }),
 });
 
 app.http("graph-write", {
   methods: ["POST"],
   authLevel: "function",
-  handler: createGraphWriteHandler({ coordinator }),
+  handler: createGraphWriteHandler({ coordinator, telemetry }),
 });
 ```
 
@@ -81,6 +81,15 @@ npm run typecheck
 npm run test:coverage
 npm run build
 ```
+
+---
+
+## Telemetry
+
+Both handlers accept optional `telemetry` (`TelemetrySink`) and emit:
+
+- Read: `graph.runtime.read.request`, `graph.runtime.read.latency`, `graph.runtime.read.error`
+- Write: `graph.runtime.write.request`, `graph.runtime.write.latency`, `graph.runtime.write.error`
 
 ---
 
