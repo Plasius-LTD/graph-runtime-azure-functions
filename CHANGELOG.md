@@ -10,8 +10,10 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 - **Added**
   - Optional telemetry sink support on read/write handler factories.
+  - Request schema validation (`isGraphQuery` + strict write-command validator) at runtime boundary.
+  - Optional authorization callback and request-body size guard (`maxBodyBytes`).
   - Runtime metrics/errors for handler request, latency, and failure paths.
-  - Tests validating telemetry emission for success and invalid-request flows.
+  - Tests validating telemetry emission, validation failures, auth guards, and upstream failure mapping.
 
 - **Changed**
   - README now documents runtime adapter telemetry surface.

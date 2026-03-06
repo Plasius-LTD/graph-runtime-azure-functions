@@ -71,6 +71,24 @@ app.http("graph-write", {
 
 ---
 
+## Security and Input Validation
+
+Handler factories enforce boundary validation for external input:
+
+- Read payloads must satisfy `isGraphQuery`.
+- Write payloads must satisfy strict write-command shape rules (idempotency/partition/aggregate keys + payload + timestamp).
+- Optional payload size guard via `maxBodyBytes` (default `64KB`, returns `413` when exceeded).
+- Optional authorization guard via `authorize(context)` (returns `403` when denied).
+
+Failure responses are bounded and sanitized:
+
+- Read validation/auth/body-limit: `400/403/413`
+- Read upstream execution failure: `502`
+- Write validation/auth/body-limit: `400/403/413`
+- Write upstream execution failure: `503`
+
+---
+
 ## Development
 
 ```bash
