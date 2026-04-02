@@ -1,6 +1,6 @@
 {
   "name": "@plasius/graph-runtime-azure-functions",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Azure Functions runtime adapter for graph gateway read/write endpoints",
   "type": "module",
   "sideEffects": false,
