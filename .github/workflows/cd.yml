@@ -34,8 +34,8 @@ jobs:
       - name: Use Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       - name: Bump version & decide publish flags
         id: pkg
@@ -83,7 +83,7 @@ jobs:
 
           echo "New version: $NEW_VER"
           git push --follow-tags
-          
+
           # Expose tag (vX.Y.Z) and version (X.Y.Z) for later steps
           VER_NO_V=${NEW_VER#v}
           echo "tag=$NEW_VER" >> "$GITHUB_OUTPUT"
@@ -91,26 +91,34 @@ jobs:
 
           NAME=$(node -p "require('./package.json').name")
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
-          if npm view "$NAME" version >/dev/null 2>&1; then
+
+          PUBLISHED_VER="$(npm view "$NAME" version 2>/dev/null || true)"
+          if [ -n "$PUBLISHED_VER" ] && [ "$PUBLISHED_VER" = "$VER_NO_V" ]; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ -n "$PUBLISHED_VER" ]; then
             echo "flags=" >> "$GITHUB_OUTPUT"
           else
             echo "flags=--access public" >> "$GITHUB_OUTPUT"
           fi
-          
+
       - name: Install deps (CI)
         run: npm ci
 
       - name: Test (coverage)
         run: npm run test -- --coverage
-        
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-         token: ${{ secrets.CODECOV_TOKEN }}
-         files: ./coverage/lcov.info
-         flags: unittests
-         fail_ci_if_error: true
-         slug: ${{ github.repository }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: unittests
+          fail_ci_if_error: true
+          slug: ${{ github.repository }}
 
       - name: Build
         run: npm run build --if-present
@@ -242,6 +250,7 @@ jobs:
           fi
 
       - name: Publish
+        if: steps.pkg.outputs.already_published != 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
