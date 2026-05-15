@@ -59,13 +59,13 @@ import {
 app.http("graph-read", {
   methods: ["POST"],
   authLevel: "function",
-  handler: createGraphReadHandler({ gateway, telemetry }),
+  handler: createGraphReadHandler({ gateway, telemetry, authorize }),
 });
 
 app.http("graph-write", {
   methods: ["POST"],
   authLevel: "function",
-  handler: createGraphWriteHandler({ coordinator, telemetry }),
+  handler: createGraphWriteHandler({ coordinator, telemetry, authorize }),
 });
 ```
 
@@ -78,7 +78,8 @@ Handler factories enforce boundary validation for external input:
 - Read payloads must satisfy `isGraphQuery`.
 - Write payloads must satisfy strict write-command shape rules (idempotency/partition/aggregate keys + payload + timestamp).
 - Optional payload size guard via `maxBodyBytes` (default `64KB`, returns `413` when exceeded).
-- Optional authorization guard via `authorize(context)` (returns `403` when denied).
+- Authorization is fail-closed. Handlers require `authorize(context)` by default and return `403` when the guard is missing or denies access.
+- Intentional public handlers must set `allowAnonymous: true` explicitly.
 
 Failure responses are bounded and sanitized:
 
