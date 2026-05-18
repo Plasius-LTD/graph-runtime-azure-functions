@@ -15,6 +15,7 @@ export interface GraphReadHandlerOptions {
   gateway: Pick<GraphGateway, "execute">;
   telemetry?: TelemetrySink;
   authorize?: AuthorizeHandler;
+  allowAnonymous?: boolean;
   maxBodyBytes?: number;
 }
 
@@ -22,6 +23,7 @@ export interface GraphWriteHandlerOptions {
   coordinator: Pick<WriteCoordinator, "submit">;
   telemetry?: TelemetrySink;
   authorize?: AuthorizeHandler;
+  allowAnonymous?: boolean;
   maxBodyBytes?: number;
 }
 
@@ -118,12 +120,20 @@ const enforceBodyLimit = (request: HttpRequest, maxBodyBytes: number): void => {
 
 const enforceAuthorization = async (
   authorize: AuthorizeHandler | undefined,
+  allowAnonymous: boolean | undefined,
   operation: "read" | "write",
   request: HttpRequest,
   context: InvocationContext,
 ): Promise<void> => {
   if (!authorize) {
-    return;
+    if (allowAnonymous === true) {
+      return;
+    }
+    throw new HandlerValidationError(
+      403,
+      "GRAPH_AUTHORIZER_REQUIRED",
+      "Graph handler authorization is not configured.",
+    );
   }
 
   const allowed = await authorize({ operation, request, context });
@@ -143,7 +153,13 @@ export const createGraphReadHandler = (options: GraphReadHandlerOptions): HttpHa
     try {
       const maxBodyBytes = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
       enforceBodyLimit(request, maxBodyBytes);
-      await enforceAuthorization(options.authorize, "read", request, context);
+      await enforceAuthorization(
+        options.authorize,
+        options.allowAnonymous,
+        "read",
+        request,
+        context,
+      );
 
       let rawBody: unknown;
       try {
@@ -216,7 +232,13 @@ export const createGraphWriteHandler = (options: GraphWriteHandlerOptions): Http
     try {
       const maxBodyBytes = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
       enforceBodyLimit(request, maxBodyBytes);
-      await enforceAuthorization(options.authorize, "write", request, context);
+      await enforceAuthorization(
+        options.authorize,
+        options.allowAnonymous,
+        "write",
+        request,
+        context,
+      );
 
       let rawBody: unknown;
       try {
