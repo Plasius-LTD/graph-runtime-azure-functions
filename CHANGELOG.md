@@ -18,7 +18,7 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Security**
-  - (placeholder)
+  - Changed graph read/write handler authorization to fail closed unless an `authorize` guard is configured or `allowAnonymous: true` is explicitly set.
 
 ## [0.1.6] - 2026-05-13
 

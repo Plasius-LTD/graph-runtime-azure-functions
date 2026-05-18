@@ -23,6 +23,7 @@ describe("createGraphReadHandler", () => {
         },
       },
       telemetry,
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -64,6 +65,7 @@ describe("createGraphReadHandler", () => {
         },
       },
       telemetry,
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -117,6 +119,7 @@ describe("createGraphReadHandler", () => {
           throw new Error("should not run");
         },
       },
+      allowAnonymous: true,
       maxBodyBytes: 8,
     });
 
@@ -147,6 +150,7 @@ describe("createGraphReadHandler", () => {
           throw new Error("dependency down");
         },
       },
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -162,6 +166,30 @@ describe("createGraphReadHandler", () => {
 
     expect(response.status).toBe(502);
     expect((response as any).jsonBody.code).toBe("GRAPH_READ_UPSTREAM_FAILED");
+  });
+
+  it("returns 403 when read authorization is omitted without explicit anonymous access", async () => {
+    const handler = createGraphReadHandler({
+      gateway: {
+        async execute() {
+          throw new Error("should not run");
+        },
+      },
+    });
+
+    const response = await handler(
+      {
+        async json() {
+          return {
+            requests: [{ resolver: "user.profile", key: "user_1" }],
+          };
+        },
+      } as any,
+      {} as any,
+    );
+
+    expect(response.status).toBe(403);
+    expect((response as any).jsonBody.code).toBe("GRAPH_AUTHORIZER_REQUIRED");
   });
 });
 
@@ -186,6 +214,7 @@ describe("createGraphWriteHandler", () => {
         },
       },
       telemetry,
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -228,6 +257,7 @@ describe("createGraphWriteHandler", () => {
           };
         },
       },
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -262,6 +292,7 @@ describe("createGraphWriteHandler", () => {
         },
       },
       telemetry,
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -296,6 +327,7 @@ describe("createGraphWriteHandler", () => {
           throw new Error("should not run");
         },
       },
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -346,6 +378,34 @@ describe("createGraphWriteHandler", () => {
     expect((response as any).jsonBody.code).toBe("GRAPH_FORBIDDEN");
   });
 
+  it("returns 403 when write authorization is omitted without explicit anonymous access", async () => {
+    const handler = createGraphWriteHandler({
+      coordinator: {
+        async submit() {
+          throw new Error("should not run");
+        },
+      },
+    });
+
+    const response = await handler(
+      {
+        async json() {
+          return {
+            idempotencyKey: "idk",
+            partitionKey: "pk",
+            aggregateKey: "agg",
+            payload: {},
+            submittedAtEpochMs: 1,
+          };
+        },
+      } as any,
+      {} as any,
+    );
+
+    expect(response.status).toBe(403);
+    expect((response as any).jsonBody.code).toBe("GRAPH_AUTHORIZER_REQUIRED");
+  });
+
   it("returns 413 when write payload exceeds configured limit", async () => {
     const handler = createGraphWriteHandler({
       coordinator: {
@@ -353,6 +413,7 @@ describe("createGraphWriteHandler", () => {
           throw new Error("should not run");
         },
       },
+      allowAnonymous: true,
       maxBodyBytes: 8,
     });
 
@@ -387,6 +448,7 @@ describe("createGraphWriteHandler", () => {
           throw new Error("should not run");
         },
       },
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -409,6 +471,7 @@ describe("createGraphWriteHandler", () => {
           throw new Error("should not run");
         },
       },
+      allowAnonymous: true,
     });
 
     const response = await handler(
@@ -433,6 +496,7 @@ describe("createGraphWriteHandler", () => {
           throw new Error("should not run");
         },
       },
+      allowAnonymous: true,
     });
 
     const response = await handler(
