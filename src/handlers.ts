@@ -3,6 +3,32 @@ import { isGraphQuery, type GraphQuery, type TelemetrySink, type WriteCommand } 
 import type { GraphGateway } from "@plasius/graph-gateway-core";
 import type { WriteCoordinator } from "@plasius/graph-write-coordinator";
 
+import {
+  getGraphRuntimeAzureFunctionsDefaultTranslation,
+  graphRuntimeAzureFunctionsEnGbTranslations,
+  graphRuntimeAzureFunctionsErrorCodes,
+  graphRuntimeAzureFunctionsErrorMessageKeysByCode,
+  graphRuntimeAzureFunctionsTranslationKeys,
+  graphRuntimeAzureFunctionsTranslations,
+} from "./i18n.js";
+import type {
+  GraphRuntimeAzureFunctionsErrorCode,
+  GraphRuntimeAzureFunctionsTranslationKey,
+} from "./i18n.js";
+
+export {
+  getGraphRuntimeAzureFunctionsDefaultTranslation,
+  graphRuntimeAzureFunctionsEnGbTranslations,
+  graphRuntimeAzureFunctionsErrorCodes,
+  graphRuntimeAzureFunctionsErrorMessageKeysByCode,
+  graphRuntimeAzureFunctionsTranslationKeys,
+  graphRuntimeAzureFunctionsTranslations,
+};
+export type {
+  GraphRuntimeAzureFunctionsErrorCode,
+  GraphRuntimeAzureFunctionsTranslationKey,
+};
+
 export interface HandlerAuthContext {
   operation: "read" | "write";
   request: HttpRequest;
@@ -25,6 +51,13 @@ export interface GraphWriteHandlerOptions {
   authorize?: AuthorizeHandler;
   allowAnonymous?: boolean;
   maxBodyBytes?: number;
+}
+
+export interface GraphRuntimeErrorResponseBody {
+  code: GraphRuntimeAzureFunctionsErrorCode;
+  message: string;
+  messageKey: GraphRuntimeAzureFunctionsTranslationKey;
+  messageDefault: string;
 }
 
 const DEFAULT_MAX_BODY_BYTES = 64 * 1024;
@@ -79,14 +112,40 @@ const isWriteCommandPayloadValid = (value: unknown): value is WriteCommand => {
 
 class HandlerValidationError extends Error {
   public readonly status: number;
-  public readonly code: string;
+  public readonly code: GraphRuntimeAzureFunctionsErrorCode;
+  public readonly messageKey: GraphRuntimeAzureFunctionsTranslationKey;
+  public readonly messageDefault: string;
 
-  public constructor(status: number, code: string, message: string) {
-    super(message);
+  public constructor(status: number, code: GraphRuntimeAzureFunctionsErrorCode) {
+    const messageKey = graphRuntimeAzureFunctionsErrorMessageKeysByCode[code];
+    const messageDefault =
+      getGraphRuntimeAzureFunctionsDefaultTranslation(messageKey);
+
+    super(messageDefault);
     this.status = status;
     this.code = code;
+    this.messageKey = messageKey;
+    this.messageDefault = messageDefault;
   }
 }
+
+const graphRuntimeErrorResponseBody = (
+  code: GraphRuntimeAzureFunctionsErrorCode,
+): GraphRuntimeErrorResponseBody => {
+  const messageKey = graphRuntimeAzureFunctionsErrorMessageKeysByCode[code];
+  const messageDefault =
+    getGraphRuntimeAzureFunctionsDefaultTranslation(messageKey);
+
+  return {
+    code,
+    message: messageDefault,
+    messageKey,
+    messageDefault,
+  };
+};
+
+const telemetryMessageFromDefault = (message: string): string =>
+  message.replace(/\.$/u, "");
 
 const jsonResponse = (status: number, body: unknown): HttpResponseInit => ({
   status,
@@ -114,7 +173,10 @@ const getContentLength = (request: HttpRequest): number | null => {
 const enforceBodyLimit = (request: HttpRequest, maxBodyBytes: number): void => {
   const contentLength = getContentLength(request);
   if (contentLength !== null && contentLength > maxBodyBytes) {
-    throw new HandlerValidationError(413, "GRAPH_REQUEST_BODY_TOO_LARGE", "Request payload exceeds allowed limit.");
+    throw new HandlerValidationError(
+      413,
+      graphRuntimeAzureFunctionsErrorCodes.requestBodyTooLarge,
+    );
   }
 };
 
@@ -131,14 +193,16 @@ const enforceAuthorization = async (
     }
     throw new HandlerValidationError(
       403,
-      "GRAPH_AUTHORIZER_REQUIRED",
-      "Graph handler authorization is not configured.",
+      graphRuntimeAzureFunctionsErrorCodes.authorizerRequired,
     );
   }
 
   const allowed = await authorize({ operation, request, context });
   if (!allowed) {
-    throw new HandlerValidationError(403, "GRAPH_FORBIDDEN", "Forbidden");
+    throw new HandlerValidationError(
+      403,
+      graphRuntimeAzureFunctionsErrorCodes.forbidden,
+    );
   }
 };
 
@@ -165,10 +229,16 @@ export const createGraphReadHandler = (options: GraphReadHandlerOptions): HttpHa
       try {
         rawBody = await request.json();
       } catch {
-        throw new HandlerValidationError(400, "GRAPH_READ_REQUEST_INVALID", "Invalid graph read request.");
+        throw new HandlerValidationError(
+          400,
+          graphRuntimeAzureFunctionsErrorCodes.readRequestInvalid,
+        );
       }
       if (!isGraphQuery(rawBody)) {
-        throw new HandlerValidationError(400, "GRAPH_READ_REQUEST_INVALID", "Invalid graph read request.");
+        throw new HandlerValidationError(
+          400,
+          graphRuntimeAzureFunctionsErrorCodes.readRequestInvalid,
+        );
       }
 
       const query = rawBody as GraphQuery;
@@ -192,31 +262,28 @@ export const createGraphReadHandler = (options: GraphReadHandlerOptions): HttpHa
           tags: { code: error.code },
         });
         options.telemetry?.error({
-          message: error.message,
+          message: telemetryMessageFromDefault(error.messageDefault),
           source: "graph-runtime-azure-functions.read",
           code: error.code,
         });
-        return jsonResponse(error.status, {
-          code: error.code,
-          message: error.message,
-        });
+        return jsonResponse(error.status, graphRuntimeErrorResponseBody(error.code));
       }
 
+      const errorBody = graphRuntimeErrorResponseBody(
+        graphRuntimeAzureFunctionsErrorCodes.readUpstreamFailed,
+      );
       options.telemetry?.metric({
         name: "graph.runtime.read.error",
         value: 1,
         unit: "count",
-        tags: { code: "GRAPH_READ_UPSTREAM_FAILED" },
+        tags: { code: errorBody.code },
       });
       options.telemetry?.error({
-        message: "Graph read failed",
+        message: telemetryMessageFromDefault(errorBody.messageDefault),
         source: "graph-runtime-azure-functions.read",
-        code: "GRAPH_READ_UPSTREAM_FAILED",
+        code: errorBody.code,
       });
-      return jsonResponse(502, {
-        code: "GRAPH_READ_UPSTREAM_FAILED",
-        message: "Graph read failed.",
-      });
+      return jsonResponse(502, errorBody);
     }
   };
 };
@@ -244,10 +311,16 @@ export const createGraphWriteHandler = (options: GraphWriteHandlerOptions): Http
       try {
         rawBody = await request.json();
       } catch {
-        throw new HandlerValidationError(400, "GRAPH_WRITE_REQUEST_INVALID", "Invalid graph write request.");
+        throw new HandlerValidationError(
+          400,
+          graphRuntimeAzureFunctionsErrorCodes.writeRequestInvalid,
+        );
       }
       if (!isWriteCommandPayloadValid(rawBody)) {
-        throw new HandlerValidationError(400, "GRAPH_WRITE_REQUEST_INVALID", "Invalid graph write request.");
+        throw new HandlerValidationError(
+          400,
+          graphRuntimeAzureFunctionsErrorCodes.writeRequestInvalid,
+        );
       }
 
       const command = rawBody as WriteCommand;
@@ -272,31 +345,28 @@ export const createGraphWriteHandler = (options: GraphWriteHandlerOptions): Http
           tags: { code: error.code },
         });
         options.telemetry?.error({
-          message: error.message,
+          message: telemetryMessageFromDefault(error.messageDefault),
           source: "graph-runtime-azure-functions.write",
           code: error.code,
         });
-        return jsonResponse(error.status, {
-          code: error.code,
-          message: error.message,
-        });
+        return jsonResponse(error.status, graphRuntimeErrorResponseBody(error.code));
       }
 
+      const errorBody = graphRuntimeErrorResponseBody(
+        graphRuntimeAzureFunctionsErrorCodes.writeUpstreamFailed,
+      );
       options.telemetry?.metric({
         name: "graph.runtime.write.error",
         value: 1,
         unit: "count",
-        tags: { code: "GRAPH_WRITE_UPSTREAM_FAILED" },
+        tags: { code: errorBody.code },
       });
       options.telemetry?.error({
-        message: "Graph write failed",
+        message: telemetryMessageFromDefault(errorBody.messageDefault),
         source: "graph-runtime-azure-functions.write",
-        code: "GRAPH_WRITE_UPSTREAM_FAILED",
+        code: errorBody.code,
       });
-      return jsonResponse(503, {
-        code: "GRAPH_WRITE_UPSTREAM_FAILED",
-        message: "Graph write failed.",
-      });
+      return jsonResponse(503, errorBody);
     }
   };
 };
