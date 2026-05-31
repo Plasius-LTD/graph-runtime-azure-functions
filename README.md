@@ -88,6 +88,29 @@ Failure responses are bounded and sanitized:
 - Write validation/auth/body-limit: `400/403/413`
 - Write upstream execution failure: `503`
 
+Error bodies keep the existing `code` and `message` fields and add translation
+metadata so clients can resolve display text through `@plasius/translations`:
+
+```json
+{
+  "code": "GRAPH_READ_UPSTREAM_FAILED",
+  "message": "Graph read failed.",
+  "messageKey": "graphRuntimeAzureFunctions.error.readUpstreamFailed.message",
+  "messageDefault": "Graph read failed."
+}
+```
+
+```ts
+import { createI18n } from "@plasius/translations";
+import { graphRuntimeAzureFunctionsTranslations } from "@plasius/graph-runtime-azure-functions";
+
+const i18n = createI18n({
+  language: "en-GB",
+  fallback: "en-GB",
+  translations: graphRuntimeAzureFunctionsTranslations,
+});
+```
+
 ---
 
 ## Development

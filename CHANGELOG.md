@@ -9,12 +9,13 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 ## [Unreleased]
 
 - **Added**
-  - (placeholder)
+  - Added `en-GB` translation keys/defaults for graph runtime error response messages.
 
 - **Changed**
-  - (placeholder)
+  - Graph error responses now include `messageKey` and `messageDefault` alongside the existing `code` and `message` fields.
 
 - **Fixed**
+  - Restored the package CD workflow so protected main releases are prepared by PR and published without direct branch pushes.
   - (placeholder)
 
 - **Security**

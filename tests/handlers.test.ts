@@ -1,6 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
+import { createI18n } from "@plasius/translations";
 
-import { createGraphReadHandler, createGraphWriteHandler } from "../src/handlers.js";
+import {
+  createGraphReadHandler,
+  createGraphWriteHandler,
+  graphRuntimeAzureFunctionsEnGbTranslations,
+  graphRuntimeAzureFunctionsErrorCodes,
+  graphRuntimeAzureFunctionsErrorMessageKeysByCode,
+  graphRuntimeAzureFunctionsTranslationKeys,
+  graphRuntimeAzureFunctionsTranslations,
+} from "../src/handlers.js";
 
 describe("createGraphReadHandler", () => {
   it("maps request body to gateway execute", async () => {
@@ -79,6 +88,12 @@ describe("createGraphReadHandler", () => {
 
     expect(response.status).toBe(400);
     expect((response as any).jsonBody.code).toBe("GRAPH_READ_REQUEST_INVALID");
+    expect((response as any).jsonBody.messageKey).toBe(
+      graphRuntimeAzureFunctionsTranslationKeys.readRequestInvalidMessage,
+    );
+    expect((response as any).jsonBody.messageDefault).toBe(
+      "Invalid graph read request.",
+    );
     expect(telemetry.metric).toHaveBeenCalledWith(
       expect.objectContaining({ name: "graph.runtime.read.error" }),
     );
@@ -166,6 +181,15 @@ describe("createGraphReadHandler", () => {
 
     expect(response.status).toBe(502);
     expect((response as any).jsonBody.code).toBe("GRAPH_READ_UPSTREAM_FAILED");
+    expect((response as any).jsonBody.message).toBe("Graph read failed.");
+    expect((response as any).jsonBody.messageKey).toBe(
+      graphRuntimeAzureFunctionsTranslationKeys.readUpstreamFailedMessage,
+    );
+    expect((response as any).jsonBody.messageDefault).toBe(
+      graphRuntimeAzureFunctionsEnGbTranslations[
+        graphRuntimeAzureFunctionsTranslationKeys.readUpstreamFailedMessage
+      ],
+    );
   });
 
   it("returns 403 when read authorization is omitted without explicit anonymous access", async () => {
@@ -312,6 +336,15 @@ describe("createGraphWriteHandler", () => {
 
     expect(response.status).toBe(503);
     expect((response as any).jsonBody.code).toBe("GRAPH_WRITE_UPSTREAM_FAILED");
+    expect((response as any).jsonBody.message).toBe("Graph write failed.");
+    expect((response as any).jsonBody.messageKey).toBe(
+      graphRuntimeAzureFunctionsTranslationKeys.writeUpstreamFailedMessage,
+    );
+    expect((response as any).jsonBody.messageDefault).toBe(
+      graphRuntimeAzureFunctionsEnGbTranslations[
+        graphRuntimeAzureFunctionsTranslationKeys.writeUpstreamFailedMessage
+      ],
+    );
     expect(telemetry.metric).toHaveBeenCalledWith(
       expect.objectContaining({ name: "graph.runtime.write.error" }),
     );
@@ -551,5 +584,35 @@ describe("createGraphWriteHandler", () => {
         context: expect.objectContaining({ invocationId: "inv_1" }),
       }),
     );
+  });
+});
+
+describe("graph runtime translations", () => {
+  it("maps error codes to translation keys and en-GB defaults", () => {
+    expect(
+      graphRuntimeAzureFunctionsErrorMessageKeysByCode[
+        graphRuntimeAzureFunctionsErrorCodes.readUpstreamFailed
+      ],
+    ).toBe(graphRuntimeAzureFunctionsTranslationKeys.readUpstreamFailedMessage);
+    expect(
+      Object.values(graphRuntimeAzureFunctionsTranslationKeys).every((key) =>
+        Object.hasOwn(graphRuntimeAzureFunctionsEnGbTranslations, key),
+      ),
+    ).toBe(true);
+  });
+
+  it("can be consumed by @plasius/translations", () => {
+    const i18n = createI18n({
+      language: "en-GB",
+      fallback: "en-GB",
+      translations: graphRuntimeAzureFunctionsTranslations,
+    });
+
+    expect(
+      i18n.t(graphRuntimeAzureFunctionsTranslationKeys.readUpstreamFailedMessage),
+    ).toBe("Graph read failed.");
+    expect(
+      i18n.t(graphRuntimeAzureFunctionsTranslationKeys.writeUpstreamFailedMessage),
+    ).toBe("Graph write failed.");
   });
 });
