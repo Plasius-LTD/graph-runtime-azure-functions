@@ -9,16 +9,16 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 ## [Unreleased]
 
 - **Added**
-  - (placeholder)
+  - Published `GRAPH_RUNTIME_AZURE_FUNCTIONS_PRIVACY_GUIDANCE` plus ADR/README guidance for telemetry minimization and bounded runtime error responses.
 
 - **Changed**
-  - (placeholder)
+  - Centralized runtime telemetry error emission on a privacy-safe schema that excludes raw upstream exception text.
 
 - **Fixed**
   - (placeholder)
 
 - **Security**
-  - (placeholder)
+  - Added regression coverage proving read/write upstream failures do not leak sensitive exception text into telemetry or public error responses.
 
 ## [0.1.10] - 2026-06-22
 

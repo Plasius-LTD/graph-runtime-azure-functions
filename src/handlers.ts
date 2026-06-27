@@ -60,6 +60,12 @@ export interface GraphRuntimeErrorResponseBody {
   messageDefault: string;
 }
 
+interface SafeTelemetryError {
+  readonly message: string;
+  readonly source: string;
+  readonly code: GraphRuntimeAzureFunctionsErrorCode;
+}
+
 const DEFAULT_MAX_BODY_BYTES = 64 * 1024;
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
@@ -146,6 +152,16 @@ const graphRuntimeErrorResponseBody = (
 
 const telemetryMessageFromDefault = (message: string): string =>
   message.replace(/\.$/u, "");
+
+const createSafeTelemetryError = (
+  source: string,
+  code: GraphRuntimeAzureFunctionsErrorCode,
+  messageDefault: string,
+): SafeTelemetryError => ({
+  message: telemetryMessageFromDefault(messageDefault),
+  source,
+  code,
+});
 
 const jsonResponse = (status: number, body: unknown): HttpResponseInit => ({
   status,
@@ -261,11 +277,13 @@ export const createGraphReadHandler = (options: GraphReadHandlerOptions): HttpHa
           unit: "count",
           tags: { code: error.code },
         });
-        options.telemetry?.error({
-          message: telemetryMessageFromDefault(error.messageDefault),
-          source: "graph-runtime-azure-functions.read",
-          code: error.code,
-        });
+        options.telemetry?.error(
+          createSafeTelemetryError(
+            "graph-runtime-azure-functions.read",
+            error.code,
+            error.messageDefault,
+          ),
+        );
         return jsonResponse(error.status, graphRuntimeErrorResponseBody(error.code));
       }
 
@@ -278,11 +296,13 @@ export const createGraphReadHandler = (options: GraphReadHandlerOptions): HttpHa
         unit: "count",
         tags: { code: errorBody.code },
       });
-      options.telemetry?.error({
-        message: telemetryMessageFromDefault(errorBody.messageDefault),
-        source: "graph-runtime-azure-functions.read",
-        code: errorBody.code,
-      });
+      options.telemetry?.error(
+        createSafeTelemetryError(
+          "graph-runtime-azure-functions.read",
+          errorBody.code,
+          errorBody.messageDefault,
+        ),
+      );
       return jsonResponse(502, errorBody);
     }
   };
@@ -344,11 +364,13 @@ export const createGraphWriteHandler = (options: GraphWriteHandlerOptions): Http
           unit: "count",
           tags: { code: error.code },
         });
-        options.telemetry?.error({
-          message: telemetryMessageFromDefault(error.messageDefault),
-          source: "graph-runtime-azure-functions.write",
-          code: error.code,
-        });
+        options.telemetry?.error(
+          createSafeTelemetryError(
+            "graph-runtime-azure-functions.write",
+            error.code,
+            error.messageDefault,
+          ),
+        );
         return jsonResponse(error.status, graphRuntimeErrorResponseBody(error.code));
       }
 
@@ -361,11 +383,13 @@ export const createGraphWriteHandler = (options: GraphWriteHandlerOptions): Http
         unit: "count",
         tags: { code: errorBody.code },
       });
-      options.telemetry?.error({
-        message: telemetryMessageFromDefault(errorBody.messageDefault),
-        source: "graph-runtime-azure-functions.write",
-        code: errorBody.code,
-      });
+      options.telemetry?.error(
+        createSafeTelemetryError(
+          "graph-runtime-azure-functions.write",
+          errorBody.code,
+          errorBody.messageDefault,
+        ),
+      );
       return jsonResponse(503, errorBody);
     }
   };

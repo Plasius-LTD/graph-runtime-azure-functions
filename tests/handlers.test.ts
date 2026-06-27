@@ -4,12 +4,13 @@ import { createI18n } from "@plasius/translations";
 import {
   createGraphReadHandler,
   createGraphWriteHandler,
+  GRAPH_RUNTIME_AZURE_FUNCTIONS_PRIVACY_GUIDANCE,
   graphRuntimeAzureFunctionsEnGbTranslations,
   graphRuntimeAzureFunctionsErrorCodes,
   graphRuntimeAzureFunctionsErrorMessageKeysByCode,
   graphRuntimeAzureFunctionsTranslationKeys,
   graphRuntimeAzureFunctionsTranslations,
-} from "../src/handlers.js";
+} from "../src/index.js";
 
 describe("createGraphReadHandler", () => {
   it("maps request body to gateway execute", async () => {
@@ -192,6 +193,47 @@ describe("createGraphReadHandler", () => {
     );
   });
 
+  it("does not leak upstream exception text through read telemetry or bounded errors", async () => {
+    const telemetry = {
+      metric: vi.fn(),
+      error: vi.fn(),
+      trace: vi.fn(),
+    };
+    const sensitiveMessage = "user=alice@example.com token=secret-value";
+    const handler = createGraphReadHandler({
+      gateway: {
+        async execute() {
+          throw new Error(sensitiveMessage);
+        },
+      },
+      telemetry,
+      allowAnonymous: true,
+    });
+
+    const response = await handler(
+      {
+        async json() {
+          return {
+            requests: [{ resolver: "user.profile", key: "user_1" }],
+          };
+        },
+      } as any,
+      {} as any,
+    );
+
+    expect(response.status).toBe(502);
+    expect((response as any).jsonBody.message).toBe("Graph read failed.");
+    expect((response as any).jsonBody.message).not.toContain("alice@example.com");
+    expect((response as any).jsonBody.messageDefault).not.toContain("secret-value");
+    expect(telemetry.error).toHaveBeenCalledWith({
+      message: "Graph read failed",
+      source: "graph-runtime-azure-functions.read",
+      code: "GRAPH_READ_UPSTREAM_FAILED",
+    });
+    expect(telemetry.error.mock.calls[0]?.[0]).not.toHaveProperty("details");
+    expect(JSON.stringify(telemetry.error.mock.calls[0]?.[0])).not.toContain(sensitiveMessage);
+  });
+
   it("returns 403 when read authorization is omitted without explicit anonymous access", async () => {
     const handler = createGraphReadHandler({
       gateway: {
@@ -351,6 +393,51 @@ describe("createGraphWriteHandler", () => {
     expect(telemetry.error).toHaveBeenCalledWith(
       expect.objectContaining({ code: "GRAPH_WRITE_UPSTREAM_FAILED" }),
     );
+  });
+
+  it("does not leak upstream exception text through write telemetry or bounded errors", async () => {
+    const telemetry = {
+      metric: vi.fn(),
+      error: vi.fn(),
+      trace: vi.fn(),
+    };
+    const sensitiveMessage = "refreshToken=top-secret user=bob@example.com";
+    const handler = createGraphWriteHandler({
+      coordinator: {
+        async submit() {
+          throw new Error(sensitiveMessage);
+        },
+      },
+      telemetry,
+      allowAnonymous: true,
+    });
+
+    const response = await handler(
+      {
+        async json() {
+          return {
+            idempotencyKey: "idk",
+            partitionKey: "pk",
+            aggregateKey: "agg",
+            payload: {},
+            submittedAtEpochMs: 1,
+          };
+        },
+      } as any,
+      {} as any,
+    );
+
+    expect(response.status).toBe(503);
+    expect((response as any).jsonBody.message).toBe("Graph write failed.");
+    expect((response as any).jsonBody.message).not.toContain("bob@example.com");
+    expect((response as any).jsonBody.messageDefault).not.toContain("top-secret");
+    expect(telemetry.error).toHaveBeenCalledWith({
+      message: "Graph write failed",
+      source: "graph-runtime-azure-functions.write",
+      code: "GRAPH_WRITE_UPSTREAM_FAILED",
+    });
+    expect(telemetry.error.mock.calls[0]?.[0]).not.toHaveProperty("details");
+    expect(JSON.stringify(telemetry.error.mock.calls[0]?.[0])).not.toContain(sensitiveMessage);
   });
 
   it("returns 400 when write request schema is invalid", async () => {
@@ -614,5 +701,20 @@ describe("graph runtime translations", () => {
     expect(
       i18n.t(graphRuntimeAzureFunctionsTranslationKeys.writeUpstreamFailedMessage),
     ).toBe("Graph write failed.");
+  });
+
+  it("exports runtime privacy guidance for telemetry and response handling", () => {
+    expect(
+      GRAPH_RUNTIME_AZURE_FUNCTIONS_PRIVACY_GUIDANCE.map((entry) => entry.id),
+    ).toEqual([
+      "telemetry-minimization",
+      "bounded-error-responses",
+      "authorized-success-payloads",
+    ]);
+    expect(
+      GRAPH_RUNTIME_AZURE_FUNCTIONS_PRIVACY_GUIDANCE.every(
+        (entry) => entry.allowedData.length > 0 && entry.disallowedData.length > 0,
+      ),
+    ).toBe(true);
   });
 });
