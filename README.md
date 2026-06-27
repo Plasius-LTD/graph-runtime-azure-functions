@@ -133,6 +133,27 @@ Both handlers accept optional `telemetry` (`TelemetrySink`) and emit:
 - Read: `graph.runtime.read.request`, `graph.runtime.read.latency`, `graph.runtime.read.error`
 - Write: `graph.runtime.write.request`, `graph.runtime.write.latency`, `graph.runtime.write.error`
 
+Telemetry stays privacy-minimized by design:
+
+- emitted error events carry only the generic translated message, stable error code, and handler source;
+- the adapter does not serialize request bodies, resolver params, write payloads, graph result data, or raw upstream exception text into telemetry;
+- host applications should keep downstream telemetry sinks aligned with the same minimal schema.
+
+## Runtime Privacy Guidance
+
+The package exports `GRAPH_RUNTIME_AZURE_FUNCTIONS_PRIVACY_GUIDANCE` to make the
+runtime privacy boundary explicit for rollout reviews and host integrations.
+
+- `telemetry-minimization`
+  - telemetry is limited to generic outcome data and must never include graph payloads or raw upstream diagnostics
+- `bounded-error-responses`
+  - handler-generated `400/403/413/502/503` responses expose only stable codes plus translated generic messages
+- `authorized-success-payloads`
+  - successful `200/202` payloads pass through the upstream gateway/coordinator result, so upstream services remain responsible for omitting or redacting secret material before it reaches this adapter
+
+The adapter intentionally sets `Cache-Control: no-store` on JSON responses, but it
+does not inspect or rewrite successful graph payloads on your behalf.
+
 ---
 
 ## Architecture
