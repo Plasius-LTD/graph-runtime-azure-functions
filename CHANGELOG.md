@@ -9,6 +9,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 ## [Unreleased]
 
 - **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [0.1.11] - 2026-06-27
+
+- **Added**
   - Published `GRAPH_RUNTIME_AZURE_FUNCTIONS_PRIVACY_GUIDANCE` plus ADR/README guidance for telemetry minimization and bounded runtime error responses.
 
 - **Changed**
@@ -141,3 +155,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [0.1.6]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.6
 [0.1.9]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.9
 [0.1.10]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.10
+[0.1.11]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.11
