@@ -12,7 +12,8 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
-  - (placeholder)
+  - Refreshed direct dependency manifests to the latest stable published graph runtime, Azure Functions, translations, lint, and test baselines.
+  - Regenerated `package-lock.json` from a clean Node 24 install so the validated dependency baseline matches the repository manifest.
 
 - **Fixed**
   - (placeholder)

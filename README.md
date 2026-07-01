@@ -20,9 +20,9 @@ Apache-2.0. ESM + CJS builds. TypeScript types included.
 ## Requirements
 
 - Node.js 24+ (matches `.nvmrc` and CI/CD)
-- `@azure/functions` 4.x (`peerDependencies`)
-- `@plasius/graph-gateway-core`
-- `@plasius/graph-write-coordinator`
+- `@azure/functions` 4.x (`peerDependencies`, validated with 4.16.x)
+- `@plasius/graph-gateway-core` 0.1.11+
+- `@plasius/graph-write-coordinator` 0.1.11+
 
 ---
 
@@ -117,7 +117,7 @@ const i18n = createI18n({
 
 ```bash
 npm run clean
-npm install
+npm ci
 npm run lint
 npm run typecheck
 npm run test:coverage
