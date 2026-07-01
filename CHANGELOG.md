@@ -12,6 +12,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
   - (placeholder)
 
 - **Changed**
+  - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [0.1.12] - 2026-07-01
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
   - Refreshed direct dependency manifests to the latest stable published graph runtime, Azure Functions, translations, lint, and test baselines.
   - Regenerated `package-lock.json` from a clean Node 24 install so the validated dependency baseline matches the repository manifest.
 
@@ -157,3 +171,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [0.1.9]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.9
 [0.1.10]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.10
 [0.1.11]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.11
+[0.1.12]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.12
