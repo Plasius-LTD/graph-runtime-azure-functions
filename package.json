@@ -51,11 +51,11 @@
   "dependencies": {
     "@plasius/graph-contracts": "^0.1.8",
     "@plasius/graph-gateway-core": "^0.1.11",
-    "@plasius/graph-write-coordinator": "^0.1.11"
+    "@plasius/graph-write-coordinator": "^0.1.12"
   },
   "peerDependencies": {
     "@azure/functions": "^4.0.0",
-    "@plasius/translations": "^1.0.17"
+    "@plasius/translations": "^1.0.23"
   },
   "peerDependenciesMeta": {
     "@plasius/translations": {
@@ -65,7 +65,7 @@
   "devDependencies": {
     "@azure/functions": "^4.16.1",
     "@eslint/js": "^10.0.1",
-    "@plasius/translations": "^1.0.22",
+    "@plasius/translations": "^1.0.23",
     "@types/node": "^26.0.1",
     "@types/react": "^19.2.17",
     "@typescript-eslint/eslint-plugin": "^8.62.1",
