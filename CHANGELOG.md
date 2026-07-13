@@ -13,6 +13,20 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 
 - **Changed**
   - (placeholder)
+
+- **Fixed**
+  - (placeholder)
+
+- **Security**
+  - (placeholder)
+
+## [0.1.13] - 2026-07-13
+
+- **Added**
+  - (placeholder)
+
+- **Changed**
+  - (placeholder)
   - Consume the propagated graph-write and RFC-remediated translation releases (task #29).
 
 - **Fixed**
@@ -173,3 +187,4 @@ The format is based on **[Keep a Changelog](https://keepachangelog.com/en/1.1.0/
 [0.1.10]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.10
 [0.1.11]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.11
 [0.1.12]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.12
+[0.1.13]: https://github.com/Plasius-LTD/graph-runtime-azure-functions/releases/tag/v0.1.13
