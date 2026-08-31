@@ -5,3 +5,4 @@
 - [ADR-0003: Runtime Handler Telemetry Baseline](./adr-0003-runtime-handler-telemetry-baseline.md)
 - [ADR-0004: Runtime Request Boundary Validation](./adr-0004-request-boundary-validation.md)
 - [ADR-0005: Runtime Privacy Minimization Baseline](./adr-0005-runtime-privacy-minimization-baseline.md)
+- [ADR-0006: Hosted OIDC Package Publication](./adr-0006-hosted-oidc-package-publication.md)
