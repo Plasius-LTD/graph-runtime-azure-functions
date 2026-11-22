@@ -52,8 +52,8 @@
   "homepage": "https://github.com/Plasius-LTD/graph-runtime-azure-functions#readme",
   "dependencies": {
     "@plasius/graph-contracts": "^0.1.17",
-    "@plasius/graph-gateway-core": "^0.1.18",
-    "@plasius/graph-write-coordinator": "^0.1.18"
+    "@plasius/graph-gateway-core": "^0.1.19",
+    "@plasius/graph-write-coordinator": "^0.1.19"
   },
   "peerDependencies": {
     "@azure/functions": "^4.0.0",
